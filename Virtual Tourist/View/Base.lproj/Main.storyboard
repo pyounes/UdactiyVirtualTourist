@@ -52,6 +52,9 @@
                                 <constraints>
                                     <constraint firstAttribute="height" constant="200" id="J3c-N7-bfT"/>
                                 </constraints>
+                                <connections>
+                                    <outlet property="delegate" destination="VKT-UR-xk4" id="X3o-nL-Qoa"/>
+                                </connections>
                             </mapView>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" showsHorizontalScrollIndicator="NO" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="24O-A3-Muq">
                                 <rect key="frame" x="0.0" y="244" width="414" height="618"/>

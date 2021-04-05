@@ -29,5 +29,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Use this method to select a configuration to create the new scene with.
         return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
     }
+    
+    func applicationDidEnterBackground(_ application: UIApplication) {
+        saveViewContext()
+    }
+    
+    func applicationWillTerminate(_ application: UIApplication) {
+        saveViewContext()
+    }
 }
 
+
+// Extension For CoreData Save Data
+extension AppDelegate {
+    fileprivate func saveViewContext() {
+        try? dataController.viewContext.save()
+    }
+}

@@ -19,10 +19,12 @@ class ImageCollectionVC: UIViewController {
     
     // Variables
     var pin: Pin!
-    var images: [Image] = []
     var photos: [Photo] = []
     var dataController: DataController!
+    var fetchedResultsController: NSFetchedResultsController<Image>!
     
+    
+    // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -36,36 +38,61 @@ class ImageCollectionVC: UIViewController {
         flowLayout.minimumLineSpacing = space
         flowLayout.itemSize = CGSize(width: dimension, height: dimension)
         
-        self.fetchImages()
+        self.fetchImages(pin: self.pin)
         self.addPin(pin: pin)
         
     }
     
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        fetchedResultsController = nil
+    }
     
-    // Custom Methods
-    private func fetchImages() {
+    
+    // MARK: - Custom Methods
+    private func fetchImages(pin: Pin) {
         let fetchRequest: NSFetchRequest<Image> = Image.fetchRequest()
-        let predicate = NSPredicate(format: "pin == %@", self.pin)
+        let predicate = NSPredicate(format: "pin == %@", pin)
         fetchRequest.predicate = predicate
+        let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
+        fetchRequest.sortDescriptors = [sortDescriptor]
         
-        if let result = try? dataController.viewContext.fetch(fetchRequest) {
-            images = result
+        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: "\(pin)-Images")
+        fetchedResultsController.delegate = self
+        
+        do {
+            try fetchedResultsController.performFetch()
+        } catch {
+            fatalError("The fetch could not be performed: \(error.localizedDescription)")
+        }
+        
+        if fetchedResultsController.sections?[0].numberOfObjects == 0 {
+            print("Empty Collection")
+            let image = Image(context: self.dataController.viewContext)
             
-            if images.count == 0 {
-                FlikrServices.shared.getImagesByLocation(lat: pin.lat, lon: pin.lon) { (result, error) in
-                    guard let photos = result?.photos.photo else {
-                        self.showAlert(message: error!.localizedDescription, title: "Error")
-                        return
-                    }
-                
-                    
-                    
-                    self.photos = photos
-                    
-                    
+            FlikrServices.shared.getImagesByLocation(lat: pin.lat, lon: pin.lon) { (result, error) in
+                guard let photos = result?.photos.photo else {
+                    self.showAlert(message: error!.localizedDescription, title: "Error")
+                    return
                 }
-            } else {
+                self.photos = photos
                 
+                DispatchQueue.global().async { [weak self] in
+                    guard let strong = self else {return }
+                    if let data = try? Data(contentsOf: strong.photos.first!.url_s) {
+                        image.creationDate = Date()
+                        image.pin = pin
+                        image.image = data
+                        image.url = strong.photos.first!.url_s
+                        try? image.managedObjectContext?.save()
+                        
+    //                    if let image = UIImage(data: data) {
+    //                        DispatchQueue.main.async {
+    //                            self?.image = image
+    //                        }
+    //                    }
+                    }
+                }
             }
         }
     }
@@ -84,17 +111,39 @@ class ImageCollectionVC: UIViewController {
 }
 
 
-//MARK: -  Collection View Delegates
+// MARK: -  Collection View Delegates
 extension ImageCollectionVC: UICollectionViewDelegate, UICollectionViewDataSource {
+    
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
+        return fetchedResultsController.sections?.count ?? 1
+    }
+    
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        self.images.count
+        return fetchedResultsController.sections?[section].numberOfObjects ?? 0
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCollectionCell", for: indexPath) as! ImageCollectionCell
+        let image = fetchedResultsController.object(at: indexPath)
+        cell.setupCell(image: image)
         return cell
     }
     
     
 }
 
+// MARK: - NSFetchedResultsControllerDelegate
+extension ImageCollectionVC: NSFetchedResultsControllerDelegate {
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        
+    }
+}
+
+
+// MARK: MKMapViewDelegate
+extension ImageCollectionVC: MKMapViewDelegate {
+    
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        Global.pinView(mapView: mapView, annotation: annotation)
+    }
+}

@@ -30,7 +30,7 @@ struct Photo: Codable {
     var ispublic:   Int
     var isfriend:   Int
     var isfamily:   Int
-    var url_s:      String
+    var url_s:      URL
 }
 
 

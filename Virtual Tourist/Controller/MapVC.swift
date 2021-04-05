@@ -46,12 +46,10 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
     // fetch Pins from Coredata
     fileprivate func fetchPins() {
         let fetchRequest: NSFetchRequest<Pin> = Pin.fetchRequest()
-        
         if let result = try? dataController.viewContext.fetch(fetchRequest) {
             pins = result
+            self.loadPins(pins: pins)
         }
-        
-        self.loadPins(pins: pins)
     }
     
     
@@ -155,19 +153,7 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
 extension MapVC: MKMapViewDelegate {
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        let reuseId = "pin"
-        
-        var pinView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseId) as? MKPinAnnotationView
-
-        if pinView == nil {
-            pinView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
-            pinView!.pinTintColor = .red
-        }
-        else {
-            pinView!.annotation = annotation
-        }
-        
-        return pinView
+        Global.pinView(mapView: mapView, annotation: annotation)
     }
     
     
