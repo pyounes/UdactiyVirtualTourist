@@ -9,31 +9,13 @@ import Foundation
 
 class TASKManager {
     
-    enum Method: String {
-        case post = "POST"
-        case put  = "PUT"
-        case get  = "GET"
-        case del  = "DELETE"
-    }
-    
     class func taskHandler<ResponseType: Decodable, FailureType: Decodable>(
         url: URL
-        ,method: Method
         ,responseType: ResponseType.Type
         ,failure: FailureType.Type
         ,completion: @escaping (ResponseType?, Error?) -> Void) {
         
-        var request = URLRequest(url: url)
-
-        switch method {
-        case .get:
-            request.httpMethod = method.rawValue
-            break
-        case .post, .put:
-            break
-        case .del:
-            break
-        }
+        let request = URLRequest(url: url)
         
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             guard let data = data else {
@@ -44,6 +26,7 @@ class TASKManager {
             }
                         
             let decoder = JSONDecoder()
+
             do {
                 let responseObject = try decoder.decode(ResponseType.self, from: data)
                 DispatchQueue.main.async {

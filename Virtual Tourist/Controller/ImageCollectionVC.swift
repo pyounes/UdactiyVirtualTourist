@@ -20,12 +20,14 @@ class ImageCollectionVC: UIViewController {
     // Variables
     var pin: Pin!
     var images: [Image] = []
+    var photos: [Photo] = []
     var dataController: DataController!
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Do any additional setup after loading the view.
+        self.title = "Pin Image Collection"
+        
         let space: CGFloat = 3.0
         let dimension = (view.frame.size.width - (2 * space)) / 3.0
 
@@ -50,7 +52,18 @@ class ImageCollectionVC: UIViewController {
             images = result
             
             if images.count == 0 {
+                FlikrServices.shared.getImagesByLocation(lat: pin.lat, lon: pin.lon) { (result, error) in
+                    guard let photos = result?.photos.photo else {
+                        self.showAlert(message: error!.localizedDescription, title: "Error")
+                        return
+                    }
                 
+                    
+                    
+                    self.photos = photos
+                    
+                    
+                }
             } else {
                 
             }

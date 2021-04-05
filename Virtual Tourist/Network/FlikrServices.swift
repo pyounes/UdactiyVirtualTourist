@@ -18,25 +18,22 @@ class FlikrServices {
      - Comment           : function to return the session
      - Object                : UserLogin
      */
-//    func getImagesByLocation(lat: Double, lon: Double, completion: @escaping (Bool, Error?) -> Void) {
-//        TASKManager.taskHandler(url: EndPoints.getImagesByLocation(lat, lon)
-//                                ,method: .get
-//                                ,responseType: UserLogin.self
-//                                ,failure: UdacityFailure.self) { (response, error) in
-//            if let error = error {
-//                completion(false, error)
-//            } else {
-//                if let response = response {
-//                    GlobalData.shared.sessionID = response.session.id
-//                    GlobalData.shared.uniqueKey = response.account.key
-//                    completion(true, nil)
-//
-//                } else {
-//                    completion(false, error)
-//                }
-//            }
-//        }
-//    }
+    func getImagesByLocation(lat: Double, lon: Double, completion: @escaping (ImagesResponseModel?, Error?) -> Void) {
+        TASKManager.taskHandler(url: EndPoints.getImagesByLocation(lat, lon).url
+                                ,method: .get
+                                ,responseType: ImagesResponseModel.self
+                                ,failure: ImagesFailResponse.self) { (response, error) in
+            if let error = error {
+                completion(nil, error)
+            } else {
+                if let response = response {
+                    completion(response, nil)
+                } else {
+                    completion(nil, error)
+                }
+            }
+        }
+    }
 //    
 //    
 //    /**

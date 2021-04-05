@@ -113,7 +113,7 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
     
     // get Pin from coreData to be sent to the ImageCollectionVC
     private func fetchSelectedPin(annotation: MKAnnotation) -> Pin {
-        var pin: Pin = Pin()
+        var pin: Pin = Pin(context: dataController.viewContext)
         let fetchRequest: NSFetchRequest<Pin> = Pin.fetchRequest()
         let predicate = NSPredicate(format: "lat == %@ AND lon == %@", argumentArray: [annotation.coordinate.latitude, annotation.coordinate.longitude])
         fetchRequest.predicate = predicate
