@@ -57,7 +57,7 @@
                                 </connections>
                             </mapView>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" showsHorizontalScrollIndicator="NO" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="24O-A3-Muq">
-                                <rect key="frame" x="0.0" y="244" width="414" height="618"/>
+                                <rect key="frame" x="0.0" y="244" width="414" height="568"/>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 <collectionViewFlowLayout key="collectionViewLayout" automaticEstimatedItemSize="YES" minimumLineSpacing="10" minimumInteritemSpacing="10" id="TYR-Qq-IL2">
                                     <size key="itemSize" width="128" height="128"/>
@@ -67,17 +67,17 @@
                                 </collectionViewFlowLayout>
                                 <cells>
                                     <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" restorationIdentifier="ImageCollectionCell" reuseIdentifier="ImageCollectionCell" id="TtY-mp-19J" customClass="ImageCollectionCell" customModule="Virtual_Tourist" customModuleProvider="target">
-                                        <rect key="frame" x="0.0" y="0.0" width="95" height="95"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="120" height="100"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <collectionViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="yqi-Pg-GWU">
-                                            <rect key="frame" x="0.0" y="0.0" width="95" height="95"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="120" height="100"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="OkC-CV-S7d">
-                                                    <rect key="frame" x="10" y="10" width="75" height="75"/>
+                                                    <rect key="frame" x="10" y="10" width="100" height="80"/>
                                                     <constraints>
-                                                        <constraint firstAttribute="width" constant="75" id="hc7-3y-lLk"/>
-                                                        <constraint firstAttribute="height" constant="75" id="ynf-0Q-fN3"/>
+                                                        <constraint firstAttribute="width" constant="100" id="hc7-3y-lLk"/>
+                                                        <constraint firstAttribute="height" constant="80" id="ynf-0Q-fN3"/>
                                                     </constraints>
                                                 </imageView>
                                             </subviews>
@@ -98,17 +98,26 @@
                                     <outlet property="delegate" destination="VKT-UR-xk4" id="FV8-0P-zfe"/>
                                 </connections>
                             </collectionView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="6SK-rf-Jb8">
+                                <rect key="frame" x="0.0" y="812" width="414" height="50"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="25"/>
+                                <state key="normal" title="New Collection"/>
+                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="RZF-5h-sfm"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
                             <constraint firstItem="RZF-5h-sfm" firstAttribute="trailing" secondItem="lzc-6Q-TyH" secondAttribute="trailing" id="5ec-6i-6vd"/>
-                            <constraint firstItem="RZF-5h-sfm" firstAttribute="bottom" secondItem="24O-A3-Muq" secondAttribute="bottom" id="QbM-xb-zVW"/>
+                            <constraint firstItem="6SK-rf-Jb8" firstAttribute="leading" secondItem="RZF-5h-sfm" secondAttribute="leading" id="FoT-BS-vAd"/>
+                            <constraint firstItem="RZF-5h-sfm" firstAttribute="trailing" secondItem="6SK-rf-Jb8" secondAttribute="trailing" id="Imn-L9-qRS"/>
+                            <constraint firstItem="RZF-5h-sfm" firstAttribute="bottom" secondItem="24O-A3-Muq" secondAttribute="bottom" constant="50" id="QbM-xb-zVW"/>
                             <constraint firstItem="24O-A3-Muq" firstAttribute="top" secondItem="lzc-6Q-TyH" secondAttribute="bottom" id="Upd-QW-clx"/>
                             <constraint firstItem="RZF-5h-sfm" firstAttribute="trailing" secondItem="24O-A3-Muq" secondAttribute="trailing" id="b8W-Tq-cSq"/>
+                            <constraint firstItem="6SK-rf-Jb8" firstAttribute="top" secondItem="24O-A3-Muq" secondAttribute="bottom" id="g0g-gM-2Zy"/>
                             <constraint firstItem="lzc-6Q-TyH" firstAttribute="leading" secondItem="RZF-5h-sfm" secondAttribute="leading" id="jnX-gC-ih0"/>
                             <constraint firstItem="lzc-6Q-TyH" firstAttribute="top" secondItem="RZF-5h-sfm" secondAttribute="top" id="ktp-L8-YOD"/>
                             <constraint firstItem="24O-A3-Muq" firstAttribute="leading" secondItem="RZF-5h-sfm" secondAttribute="leading" id="mTo-nZ-w1U"/>
+                            <constraint firstItem="RZF-5h-sfm" firstAttribute="bottom" secondItem="6SK-rf-Jb8" secondAttribute="bottom" id="mnL-TC-QHA"/>
                         </constraints>
                     </view>
                     <connections>
