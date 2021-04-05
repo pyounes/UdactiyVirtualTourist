@@ -27,9 +27,11 @@ extension UIViewController {
     }
     
     // MARK: Push LocationVC
-    func pushImageCollectionVC(images: [Image]) {
+    func pushImageCollectionVC(pin: Pin, dataController: DataController) {
         let sb = UIStoryboard(name: "Main", bundle: nil)
         let vc = sb.instantiateViewController(identifier: "ImageCollectionVC") as ImageCollectionVC
+        vc.pin = pin
+        vc.dataController = dataController
         navigationController?.pushViewController(vc, animated: true)
     }
     

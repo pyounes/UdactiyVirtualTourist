@@ -16,41 +16,35 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
     
     // Variables
     var pins: [Pin] = []
-    
     var dataController: DataController!
-    
     var annotations = [MKPointAnnotation]()
-    
-    
-    let locations: [Location] = [Location(name: "Beirut", lat: 33.8938, lon: 35.5018, images: [Imagee(url: "https://asd.asd.com"),
-                                                                                               Imagee(url: "https://asd1.asd.com"),
-                                                                                               Imagee(url: "https://asd2.asd.com"),
-                                                                                               Imagee(url: "https://asd3.asd.com")]),
-                                 Location(name: "Jarjouh", lat: 33.444705, lon: 35.5199817, images: [Imagee(url: "https://asd.asd.com"),
-                                                                                               Imagee(url: "https://asd1.asd.com"),
-                                                                                               Imagee(url: "https://asd2.asd.com"),
-                                                                                               Imagee(url: "https://asd3.asd.com")]),
-                                 Location(name: "Anjar", lat: 33.7278717, lon: 35.9399621, images: [Imagee(url: "https://asd.asd.com"),
-                                                                                               Imagee(url: "https://asd1.asd.com"),
-                                                                                               Imagee(url: "https://asd2.asd.com"),
-                                                                                               Imagee(url: "https://asd3.asd.com")]),
-                                 Location(name: "Beirut", lat: 33.8938, lon: 35.5018, images: [Imagee(url: "https://asd.asd.com"),
-                                                                                               Imagee(url: "https://asd1.asd.com"),
-                                                                                               Imagee(url: "https://asd2.asd.com"),
-                                                                                               Imagee(url: "https://asd3.asd.com")])]
+        
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
-//
-//        StudentServices.shared.getStudentLocations(completion: handleGetStudentLocationResponse(studentLocations:error:))
-//
-        let gestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(handleTap))
+
+        self.title = "Tap a Pin Or add a new One"
+        self.loadMapLocation()
+        
+        let gestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(handleTapOnMap))
         gestureRecognizer.delegate = self
         mapView.addGestureRecognizer(gestureRecognizer)
         
-        
         mapView.delegate = self
+        
+        fetchPins()
+        
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+    }
+    
+
+    // MARK: - Actions
+    // fetch Pins from Coredata
+    fileprivate func fetchPins() {
         let fetchRequest: NSFetchRequest<Pin> = Pin.fetchRequest()
         
         if let result = try? dataController.viewContext.fetch(fetchRequest) {
@@ -58,31 +52,12 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
         }
         
         self.loadPins(pins: pins)
-        
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-//        StudentServices.shared.getStudentLocations(completion: handleGetStudentLocationResponse(studentLocations:error:))
-    }
     
-
-    // MARK: - Actions
-//    private func handleGetStudentLocationResponse(studentLocations: [StudentLocation]?, error: Error?) {
-//        if let error = error {
-//            showAlert(message: error.localizedDescription, title: "Error")
-//        } else {
-//            if let locations = studentLocations {
-//                GlobalData.shared.locations = locations
-//
-//            } else {
-//                showAlert(message: "Did not find any Student Locations", title: "Attention")
-//            }
-//        }
-//    }
     
-    //
-    @objc func handleTap(gestureReconizer: UIGestureRecognizer) {
+    // handle Long Tap On Map
+    @objc func handleTapOnMap(gestureReconizer: UIGestureRecognizer) {
         if gestureReconizer.state == UIGestureRecognizer.State.began {
             let tapLocation = gestureReconizer.location(in: mapView)
             let coordinate = mapView.convert(tapLocation,toCoordinateFrom: mapView)
@@ -126,7 +101,7 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
         self.mapView.addAnnotations(annotations)
     }
     
-    // Show Location On the map
+    // Add loaded Pins on the Map
     private func addPin(pin: Pin) {
         let coordinate = CLLocationCoordinate2D(latitude: pin.lat, longitude: pin.lon)
         let annotation = MKPointAnnotation()
@@ -134,6 +109,43 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
         mapView.addAnnotation(annotation)
         let region = MKCoordinateRegion(center: coordinate, span: MKCoordinateSpan(latitudeDelta: 1.0, longitudeDelta: 1.0))
         mapView.setRegion(region, animated: true)
+    }
+    
+    // get Pin from coreData to be sent to the ImageCollectionVC
+    private func fetchSelectedPin(annotation: MKAnnotation) -> Pin {
+        var pin: Pin = Pin()
+        let fetchRequest: NSFetchRequest<Pin> = Pin.fetchRequest()
+        let predicate = NSPredicate(format: "lat == %@ AND lon == %@", argumentArray: [annotation.coordinate.latitude, annotation.coordinate.longitude])
+        fetchRequest.predicate = predicate
+        
+        if let result = try? dataController.viewContext.fetch(fetchRequest) {
+            if result.count > 0 {
+                pin = result.first!
+            }
+        }
+        return pin
+    }
+    
+    // Get The Current Map View Position and Zoom
+    private func saveMapLocation() {
+        let mapRegion = [
+            "latitude" : mapView.region.center.latitude,
+            "longitude" : mapView.region.center.longitude,
+            "latitudeDelta" : mapView.region.span.latitudeDelta,
+            "longitudeDelta" : mapView.region.span.longitudeDelta
+        ]
+        UserDefaults.standard.set(mapRegion, forKey: "MapLocation")
+    }
+    
+    // Load Previously saved MapLocation
+    private func loadMapLocation() {
+        if let mapRegin = UserDefaults.standard.dictionary(forKey: "MapLocation") {
+            let location = mapRegin as! [String: Double]
+            let center = CLLocationCoordinate2D(latitude: location["latitude"]!, longitude: location["longitude"]!)
+            let span = MKCoordinateSpan(latitudeDelta: location["latitudeDelta"]!, longitudeDelta: location["longitudeDelta"]!)
+            let region = MKCoordinateRegion(center: center, span: span)
+            mapView.setRegion(region, animated: true)
+        }
     }
 }
 
@@ -160,9 +172,13 @@ extension MapVC: MKMapViewDelegate {
     
     
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-        print(mapView.annotations.count)
+        let pin = self.fetchSelectedPin(annotation: view.annotation!)
+        self.pushImageCollectionVC(pin: pin, dataController: self.dataController)
+    }
+    
+    
+    func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+        self.saveMapLocation()
     }
 
 }
-
-
