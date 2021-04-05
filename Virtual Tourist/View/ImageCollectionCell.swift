@@ -16,23 +16,8 @@ class ImageCollectionCell: UICollectionViewCell {
         
     }
     
-    func setupCell(image: Image) {
-        self.imageView.load(url: image.url!)
+    func setupCell(image: Data?) {
+        self.imageView.image = UIImage(data: image!)
     }
     
-}
-
-
-extension UIImageView {
-    func load(url: URL) {
-        DispatchQueue.global().async { [weak self] in
-            if let data = try? Data(contentsOf: url) {
-                if let image = UIImage(data: data) {
-                    DispatchQueue.main.async {
-                        self?.image = image
-                    }
-                }
-            }
-        }
-    }
 }

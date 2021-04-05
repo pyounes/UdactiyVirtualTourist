@@ -85,12 +85,9 @@ class ImageCollectionVC: UIViewController {
                         image.image = data
                         image.url = strong.photos.first!.url_s
                         try? image.managedObjectContext?.save()
-                        
-    //                    if let image = UIImage(data: data) {
-    //                        DispatchQueue.main.async {
-    //                            self?.image = image
-    //                        }
-    //                    }
+                        DispatchQueue.main.async {
+                            self?.imageColView.reloadData()
+                        }
                     }
                 }
             }
@@ -124,8 +121,7 @@ extension ImageCollectionVC: UICollectionViewDelegate, UICollectionViewDataSourc
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCollectionCell", for: indexPath) as! ImageCollectionCell
-        let image = fetchedResultsController.object(at: indexPath)
-        cell.setupCell(image: image)
+        cell.setupCell(image: fetchedResultsController.object(at: indexPath).image)
         return cell
     }
     
