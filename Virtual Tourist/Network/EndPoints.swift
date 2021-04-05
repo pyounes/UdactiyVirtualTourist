@@ -1,8 +1,8 @@
 //
 //  EndPoints.swift
-//  On The Map
+//  Virtual Tourist
 //
-//  Created by Pierre Younes on 3/8/21.
+//  Created by Pierre Younes on 4/4/21.
 //
 
 import Foundation
