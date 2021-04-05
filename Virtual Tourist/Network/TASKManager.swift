@@ -47,4 +47,25 @@ class TASKManager {
         }
         task.resume()
     }
+    
+    
+    // Function To handle Image Download
+    class func downloadHandler(url: URL, completion: @escaping (Data?, Error?) -> Void) {
+        
+        let request = URLRequest(url: url)
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data else {
+                DispatchQueue.main.async {
+                    completion(nil, error)
+                }
+                return
+            }
+            
+            DispatchQueue.main.async {
+                completion(data,nil)
+            }
+        }
+        task.resume()
+    }
 }

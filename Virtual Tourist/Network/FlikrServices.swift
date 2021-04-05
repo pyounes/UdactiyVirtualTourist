@@ -33,53 +33,26 @@ class FlikrServices {
             }
         }
     }
-//    
-//    
-//    /**
-//     - EndPoint name: session
-//     - Method               : DELETE
-//     - Parameters     :
-//     - Comment           : function to return the session
-//     - Object                : UserLogin
-//     */
-//    func logout(completion: @escaping (Bool, Error?) -> Void) {
-//        let body = StudentServices.Dummy()
-//        TASKManager.taskHandler(url: EndPoints.user(.logout).url
-//                                ,method: .del
-//                                ,host: .udacity
-//                                ,responseType: UserLogin.self
-//                                ,body: body
-//                                ,failure: UdacityFailure.self) { (response, error) in
-//            if error == nil {
-//                GlobalData.shared.logOut()
-//                completion(true, nil)
-//            } else {
-//                completion(false, error)
-//            }
-//        }
-//    }
-//    
-//    
-//    /**
-//     - EndPoint name: session
-//     - Method               : GET
-//     - Parameters     : user_id
-//     - Comment           : function to return Public User Data
-//     - Object                : UserLogin
-//     */
-//    func getUserData(userId: String, completion: @escaping (UserResponse?, Error?) -> Void) {
-//        let body = StudentServices.Dummy()
-//        TASKManager.taskHandler(url: EndPoints.user(.getUserData(userId)).url
-//                                ,method: .get
-//                                ,host: .udacity
-//                                ,responseType: UserResponse.self
-//                                ,body: body
-//                                ,failure: UdacityFailure.self) { (response, error) in
-//            if let response = response {
-//                completion(response, nil)
-//            } else {
-//                completion(nil, error)
-//            }
-//        }
-//    }
+    
+    
+    /**
+     - EndPoint name:
+     - Method               : Download Images
+     - Parameters     :
+     - Comment           : function to download images for from a specific URL
+     - Object                : 
+     */
+    func downloadImage(url: URL, completion: @escaping (Data?, Error?) -> Void) {
+        TASKManager.downloadHandler(url: url) { (data, error) in
+            if let error = error {
+                completion(nil, error)
+            } else {
+                if let data = data {
+                    completion(data, nil)
+                } else {
+                    completion(nil, error)
+                }
+            }
+        }
+    }
 }

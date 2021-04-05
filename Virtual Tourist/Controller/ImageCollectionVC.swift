@@ -67,31 +67,53 @@ class ImageCollectionVC: UIViewController {
         }
         
         if fetchedResultsController.sections?[0].numberOfObjects == 0 {
-            print("Empty Collection")
-            let image = Image(context: self.dataController.viewContext)
-            
-            FlikrServices.shared.getImagesByLocation(lat: pin.lat, lon: pin.lon) { (result, error) in
-                guard let photos = result?.photos.photo else {
-                    self.showAlert(message: error!.localizedDescription, title: "Error")
-                    return
-                }
-                self.photos = photos
-                
-                DispatchQueue.global().async { [weak self] in
-                    guard let strong = self else {return }
-                    if let data = try? Data(contentsOf: strong.photos.first!.url_s) {
-                        image.creationDate = Date()
-                        image.pin = pin
-                        image.image = data
-                        image.url = strong.photos.first!.url_s
-                        try? image.managedObjectContext?.save()
-                        DispatchQueue.main.async {
-                            self?.imageColView.reloadData()
-                        }
-                    }
-                }
+            self.getImages(pin: self.pin)
+        }
+        
+        try? dataController.viewContext.save()
+        
+        DispatchQueue.main.async {
+            self.imageColView.reloadData()
+        }
+    }
+    
+    // get images
+    private func getImages(pin: Pin) {
+        FlikrServices.shared.getImagesByLocation(lat: pin.lat, lon: pin.lon) { (result, error) in
+            guard let photos = result?.photos.photo else {
+                self.showAlert(message: error!.localizedDescription, title: "Error")
+                return
+            }
+            self.downloadImages(photos: photos)
+        }
+    }
+    
+    // Download Images
+    private func downloadImages(photos: [Photo]) {
+        photos.forEach { (photo) in
+            FlikrServices.shared.downloadImage(url: photo.url_s) { (data, error) in
+                guard let data = data, error == nil else {return}
+                self.addImage(pin: self.pin, imageData: data)
             }
         }
+        
+        
+        
+//        DispatchQueue.global().async { [weak self] in
+//            guard let strong = self else {return }
+//            if let data = try? Data(contentsOf: strong.photos.first!.url_s) {
+//
+//
+//            }
+//        }
+    }
+    
+    // add Image to CoreData
+    private func addImage(pin: Pin, imageData: Data) {
+        let image = Image(context: self.dataController.viewContext)
+        image.creationDate = Date()
+        image.pin = pin
+        image.image = imageData
     }
     
     // Add loaded Pins on the Map
