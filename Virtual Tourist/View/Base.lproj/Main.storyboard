@@ -41,7 +41,7 @@
         <!--Pin Images Collection-->
         <scene sceneID="p3W-EA-fz9">
             <objects>
-                <viewController title="Pin Images Collection" id="VKT-UR-xk4" customClass="ImageCollectionVC" customModule="Virtual_Tourist" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="ImageCollectionVC" title="Pin Images Collection" id="VKT-UR-xk4" customClass="ImageCollectionVC" customModule="Virtual_Tourist" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="ssB-MC-Su6">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
