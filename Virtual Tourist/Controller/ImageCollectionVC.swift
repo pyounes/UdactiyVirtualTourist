@@ -16,13 +16,13 @@ class ImageCollectionVC: UIViewController {
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var imageColView: UICollectionView!
     @IBOutlet weak var flowLayout: UICollectionViewFlowLayout!
+    @IBOutlet weak var btnNewCollection: UIButton!
     
     // Variables
     var pin: Pin!
     var photos: [Photo] = []
     var dataController: DataController!
     var fetchedResultsController: NSFetchedResultsController<Image>!
-    
     
     // MARK: - Life Cycle
     override func viewDidLoad() {
@@ -38,7 +38,9 @@ class ImageCollectionVC: UIViewController {
         flowLayout.minimumLineSpacing = space
         flowLayout.itemSize = CGSize(width: dimension, height: dimension)
         
-        self.fetchImages(pin: self.pin)
+        self.btnNewCollection.isEnabled = false
+        
+        self.fetchImages(pin: self.pin, page: 1)
         self.addPin(pin: pin)
         
     }
@@ -50,14 +52,14 @@ class ImageCollectionVC: UIViewController {
     
     
     // MARK: - Custom Methods
-    private func fetchImages(pin: Pin) {
+    private func fetchImages(pin: Pin, page: Int) {
         let fetchRequest: NSFetchRequest<Image> = Image.fetchRequest()
         let predicate = NSPredicate(format: "pin == %@", pin)
         fetchRequest.predicate = predicate
         let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
         fetchRequest.sortDescriptors = [sortDescriptor]
         
-        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: "\(pin)-Images")
+        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: nil)
         fetchedResultsController.delegate = self
         
         do {
@@ -67,19 +69,37 @@ class ImageCollectionVC: UIViewController {
         }
         
         if fetchedResultsController.sections?[0].numberOfObjects == 0 {
-            self.getImages(pin: self.pin)
-        }
-        
-        try? dataController.viewContext.save()
-        
-        DispatchQueue.main.async {
-            self.imageColView.reloadData()
+            self.getImages(pin: self.pin, page: page)
+        } else {
+            self.btnNewCollection.isEnabled = true
         }
     }
     
+    private func deleteImages(pin: Pin) {
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Image")
+        let predicate = NSPredicate(format: "pin == %@", pin)
+        fetchRequest.predicate = predicate
+        let batchDeleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+        batchDeleteRequest.resultType = .resultTypeCount
+
+        do {
+            try dataController.viewContext.execute(batchDeleteRequest)
+            dataController.viewContext.reset()
+            try self.fetchedResultsController.performFetch()
+//            self.imageColView.reloadData()
+        } catch {
+            fatalError("The fetch could not be performed: \(error.localizedDescription)")
+        }
+        self.fetchImages(pin: pin, page: 20)
+        
+        
+        
+    }
+    
     // get images
-    private func getImages(pin: Pin) {
-        FlikrServices.shared.getImagesByLocation(lat: pin.lat, lon: pin.lon) { (result, error) in
+    private func getImages(pin: Pin, page: Int) {
+        self.btnNewCollection.isEnabled = false
+        FlikrServices.shared.getImagesByLocation(lat: pin.lat, lon: pin.lon, page: page) { (result, error) in
             guard let photos = result?.photos.photo else {
                 self.showAlert(message: error!.localizedDescription, title: "Error")
                 return
@@ -91,21 +111,14 @@ class ImageCollectionVC: UIViewController {
     // Download Images
     private func downloadImages(photos: [Photo]) {
         photos.forEach { (photo) in
-            FlikrServices.shared.downloadImage(url: photo.url_s) { (data, error) in
+            FlikrServices.shared.downloadImage(url: photo.url_s) {(data, error) in
                 guard let data = data, error == nil else {return}
                 self.addImage(pin: self.pin, imageData: data)
+                if photo == photos.last {
+                    self.btnNewCollection.isEnabled = true
+                }
             }
         }
-        
-        
-        
-//        DispatchQueue.global().async { [weak self] in
-//            guard let strong = self else {return }
-//            if let data = try? Data(contentsOf: strong.photos.first!.url_s) {
-//
-//
-//            }
-//        }
     }
     
     // add Image to CoreData
@@ -126,7 +139,13 @@ class ImageCollectionVC: UIViewController {
         mapView.setRegion(region, animated: true)
     }
 
-
+    // MARK: - IBActions
+    @IBAction func btnNewCollectionClicked(_ sender: UIButton) {
+        deleteImages(pin: self.pin)
+        self.imageColView.reloadData()
+        
+    }
+    
 }
 
 
@@ -147,13 +166,29 @@ extension ImageCollectionVC: UICollectionViewDelegate, UICollectionViewDataSourc
         return cell
     }
     
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let image = fetchedResultsController.object(at: indexPath)
+        fetchedResultsController.managedObjectContext.delete(image)
+    }
     
 }
 
 // MARK: - NSFetchedResultsControllerDelegate
 extension ImageCollectionVC: NSFetchedResultsControllerDelegate {
-    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        
+    
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+        switch type {
+        case .insert:
+            self.imageColView.insertItems(at: [newIndexPath!])
+            break
+        case .delete:
+            self.imageColView.deleteItems(at: [indexPath!])
+            break
+        case .update:
+            break
+        default:
+            break
+        }
     }
 }
 

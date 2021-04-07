@@ -18,8 +18,8 @@ class FlikrServices {
      - Comment           : function to return the images for a specific Location
      - Object                : ImagesResponseModel
      */
-    func getImagesByLocation(lat: Double, lon: Double, completion: @escaping (ImagesResponseModel?, Error?) -> Void) {
-        TASKManager.taskHandler(url: EndPoints.getImagesByLocation(lat, lon).url
+    func getImagesByLocation(lat: Double, lon: Double, page: Int,completion: @escaping (ImagesResponseModel?, Error?) -> Void) {
+        TASKManager.taskHandler(url: EndPoints.getImagesByLocation(lat, lon, page).url
                                 ,responseType: ImagesResponseModel.self
                                 ,failure: ImagesFailResponse.self) { (response, error) in
             if let error = error {

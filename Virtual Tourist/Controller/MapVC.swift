@@ -69,7 +69,7 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
                 pins.append(pin)
                 self.addPin(pin: pin)
             } catch {
-                showAlert(message: "Error", title: "Your Data hasn't Been Save")
+                showAlert(message: "Error", title: "Your Data hasn't Been Saved")
             }
         }
     }
