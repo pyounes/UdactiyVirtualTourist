@@ -81,18 +81,7 @@ class ImageCollectionVC: UIViewController {
         }
     }
 
-    
-    // Download Images
-    private func downloadImage(image: Image) {
-        if image.image == nil {
-            self.btnNewCollection.isEnabled = false
-            FlikrServices.shared.downloadImage(url: image.url!) { (data, error) in
-                guard let data = data, error == nil else {return}
-                self.editImage(image: image, imageData: data)
-            }
-        }
-    }
-    
+    // Download all images
     private func downloadImages() {
         if let images = fetchedResultsController.fetchedObjects {
             images.forEach { (image) in
@@ -121,6 +110,7 @@ class ImageCollectionVC: UIViewController {
                         
             self.editImageUrl(photos: images)
             self.downloadImages()
+            self.btnNewCollection.isEnabled = true
 
         }
     }
@@ -186,14 +176,7 @@ class ImageCollectionVC: UIViewController {
     // MARK: IBAction
     @IBAction func BtnNewCollectionClicked(_ sender: UIButton) {
         self.btnNewCollection.isEnabled = false
-//        self.batchDeleteAllImages()
-//        self.fetchImages(pin: self.pin)
-//        self.imageColView.reloadData()
-//        self.getImages(pin: self.pin)
-//        self.fetchImages(pin: self.pin)
-//        self.downloadImages()
         self.getImages(pin: self.pin)
-        
     }
     
 
@@ -208,6 +191,13 @@ extension ImageCollectionVC: UICollectionViewDelegate, UICollectionViewDataSourc
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        
+        if fetchedResultsController.sections?[section].numberOfObjects ?? 0 == 0 {
+            self.imageColView.setEmptyMessage("No Images were found")
+        } else {
+            self.imageColView.restore()
+        }
+        
         return fetchedResultsController.sections?[section].numberOfObjects ?? 0
     }
     

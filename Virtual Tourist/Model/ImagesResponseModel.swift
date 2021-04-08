@@ -40,11 +40,3 @@ struct ImagesFailResponse: Codable {
     let code: Int
     let message: String
 }
-
-
-// MARK: Equatable
-extension Photo: Equatable {
-    static func ==(lhs: Photo, rhs: Photo) -> Bool {
-        return lhs.id == rhs.id
-    }
-}

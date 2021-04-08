@@ -14,7 +14,7 @@ class TASKManager {
         ,responseType: ResponseType.Type
         ,failure: FailureType.Type
         ,completion: @escaping (ResponseType?, Error?) -> Void) {
-        print(url)
+
         let request = URLRequest(url: url)
         
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
