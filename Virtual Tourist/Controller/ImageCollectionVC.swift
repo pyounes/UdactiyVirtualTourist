@@ -57,9 +57,16 @@ class ImageCollectionVC: UIViewController {
         fetchRequest.predicate = predicate
         if let result = try? dataController.viewContext.fetch(fetchRequest) {
             images = result
-            self.imageColView.reloadData()
         }
+        
+        if images.count == 0 {
+            self.getImages(pin: pin, page: 1)
+        }
+        
+        self.imageColView.reloadData()
     }
+    
+    
 //    private func fetchImages(pin: Pin, page: Int) {
 //
 //        let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
@@ -101,6 +108,7 @@ class ImageCollectionVC: UIViewController {
             FlikrServices.shared.downloadImage(url: photo.url_s) {(data, error) in
                 guard let data = data, error == nil else {return}
                 self.addImage(pin: self.pin, imageData: data)
+                self.fetchImages(pin: self.pin, page: 1)
                 if photo == photos.last {
                     self.btnNewCollection.isEnabled = true
                 }
@@ -149,7 +157,7 @@ class ImageCollectionVC: UIViewController {
     
     private func deleteImage(indexPath: IndexPath) {
         let image = images[indexPath.row]
-        self.imageColView.deleteItems(at: [indexPath])
+//        self.imageColView.deleteItems(at: [indexPath])
         dataController.viewContext.delete(image)
         try? dataController.viewContext.save()
         self.fetchImages(pin: self.pin, page: 1)
@@ -157,8 +165,8 @@ class ImageCollectionVC: UIViewController {
 
     // MARK: - IBActions
     @IBAction func btnNewCollectionClicked(_ sender: UIButton) {
-//        deleteImages(pin: self.pin)
-//        self.imageColView.reloadData()
+
+        
         
     }
     
