@@ -17,7 +17,11 @@ class ImageCollectionCell: UICollectionViewCell {
     }
     
     func setupCell(image: Data?) {
-        self.imageView.image = UIImage(data: image!)
+        if let img = image {
+            self.imageView.image = UIImage(data: img)
+        } else {
+            self.imageView.image = #imageLiteral(resourceName: "placeHolderImg")
+        }
     }
     
 }

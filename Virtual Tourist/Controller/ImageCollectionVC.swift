@@ -33,17 +33,12 @@ class ImageCollectionVC: UIViewController {
         self.title = "Pin Image Collection"
         self.btnNewCollection.isEnabled = false
         
-        let space: CGFloat = 3.0
-        let dimension = (view.frame.size.width - (2 * space)) / 3.0
-
-        // flowlayout spces
-        flowLayout.minimumInteritemSpacing = space
-        flowLayout.minimumLineSpacing = space
-        flowLayout.itemSize = CGSize(width: dimension, height: dimension)
+        setFlowLayout()
         
-        self.fetchImages(pin: self.pin)
         self.addPin(pin: pin)
         
+        self.fetchImages(pin: self.pin)
+        self.downloadImages()
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -53,6 +48,20 @@ class ImageCollectionVC: UIViewController {
     
     
     // MARK: - Custom Methods
+    // function to set the Collection view flow layout
+    private func setFlowLayout() {
+        let space: CGFloat = 3.0
+        let dimension = (view.frame.size.width - (2 * space)) / 3.0
+
+        // flowlayout spces
+        flowLayout.minimumInteritemSpacing = space
+        flowLayout.minimumLineSpacing = space
+        flowLayout.itemSize = CGSize(width: dimension, height: dimension)
+    }
+    
+
+    
+    // fetch images for a specific pin
     private func fetchImages(pin: Pin) {
         let fetchRequest: NSFetchRequest<Image> = Image.fetchRequest()
         let predicate = NSPredicate(format: "pin == %@", pin)
@@ -60,53 +69,97 @@ class ImageCollectionVC: UIViewController {
         let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
         fetchRequest.sortDescriptors = [sortDescriptor]
         
-        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: "\(pin)-Images")
+        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: nil)
         fetchedResultsController.delegate = self
         
         do {
             try fetchedResultsController.performFetch()
+            self.btnNewCollection.isEnabled = true
         } catch {
             fatalError("The fetch could not be performed: \(error.localizedDescription)")
         }
-        
-        if fetchedResultsController.sections?[0].numberOfObjects == 0 {
-            self.getImages(pin: self.pin)
-        } else {
-            self.btnNewCollection.isEnabled = true
-        }
+    }
 
+    // Download all images
+    private func downloadImages() {
+        if let images = fetchedResultsController.fetchedObjects {
+            if !images.isEmpty {
+                images.forEach { (image) in
+                    if image.image == nil {
+                        self.btnNewCollection.isEnabled = false
+                        FlikrServices.shared.downloadImage(url: image.url!) { (data, error) in
+                            guard let data = data, error == nil else {return}
+                            self.editImage(image: image, imageData: data)
+                            
+                            if image == images.last {
+                                self.btnNewCollection.isEnabled = true
+                            }
+                        }
+                    }
+                }
+            } else {
+                self.btnNewCollection.isEnabled = true
+            }
+        }
     }
     
-    // get images
+    // Get Images for this pin
     private func getImages(pin: Pin) {
         FlikrServices.shared.getImagesByLocation(lat: pin.lat, lon: pin.lon) { (result, error) in
-            guard let photos = result?.photos.photo else {
+            guard let images = result?.photos.photo else {
                 self.showAlert(message: error!.localizedDescription, title: "Error")
                 return
             }
-            self.downloadImages(photos: photos)
+            self.editImageUrl(photos: images)
+            self.downloadImages()
         }
     }
     
-    // Download Images
-    private func downloadImages(photos: [Photo]) {
-        photos.forEach { (photo) in
-            FlikrServices.shared.downloadImage(url: photo.url_s) { (data, error) in
-                guard let data = data, error == nil else {return}
-                self.addImage(pin: self.pin, imageData: data)
-                if photo == photos.last {
-                    self.btnNewCollection.isEnabled = true
+    // Edit Image to add the image raw data downloaded
+    func editImageUrl(photos: [Photo]) {
+        let context = self.dataController.viewContext
+        let fetchRequest: NSFetchRequest<Image> = Image.fetchRequest()
+        
+        if let images = fetchedResultsController.fetchedObjects {
+            
+            for (photo, image) in zip(photos, images) {
+                fetchRequest.predicate = NSPredicate(format: "uuid == %@ AND url != nil", image.uuid! as CVarArg)
+                
+                do {
+                    let result = try context.fetch(fetchRequest)
+                    if (result.count > 0) {
+                        let managedObject = result[0] as NSManagedObject
+                        managedObject.setValue(photo.url_s, forKey: "url")
+                        managedObject.setValue(nil, forKey: "image")
+                        try context.save()
+                        print("Changes saved...")
+                    }
+                } catch {
+                    print("Failed")
                 }
+                
             }
         }
     }
     
-    // add Image to CoreData
-    private func addImage(pin: Pin, imageData: Data) {
-        let image = Image(context: self.dataController.viewContext)
-        image.creationDate = Date()
-        image.pin = pin
-        image.image = imageData
+    // Edit Image to add the image raw data downloaded
+    func editImage(image: Image, imageData: Data) {
+        let uuid = image.uuid!
+        let context = self.dataController.viewContext
+        let fetchRequest: NSFetchRequest<Image> = Image.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "uuid == %@ AND image == nil", uuid as CVarArg)
+        
+        do {
+            let result = try context.fetch(fetchRequest)
+            if (result.count > 0) {
+                let managedObject = result[0] as NSManagedObject
+                managedObject.setValue(imageData, forKey: "image")
+                try context.save()
+                print("Changes saved...")
+            }
+        } catch {
+            print("Failed")
+        }
     }
     
     // Add loaded Pins on the Map
@@ -119,26 +172,11 @@ class ImageCollectionVC: UIViewController {
         mapView.setRegion(region, animated: true)
     }
     
-    // Delete all Images
-    fileprivate func deleteAllImages() {
-        if let images = fetchedResultsController.fetchedObjects {
-            images.forEach { (image) in
-                dataController.viewContext.delete(image)
-            }
-            
-            do {
-                try dataController.viewContext.save()
-            } catch {
-                print("Error When deleting Images")
-            }
-        }
-    }
     
     // MARK: IBAction
     @IBAction func BtnNewCollectionClicked(_ sender: UIButton) {
-        self.btnNewCollection.isEnabled = true
-        self.deleteAllImages()
-        self.fetchImages(pin: self.pin)
+        self.btnNewCollection.isEnabled = false
+        self.getImages(pin: self.pin)
     }
     
 
@@ -153,11 +191,19 @@ extension ImageCollectionVC: UICollectionViewDelegate, UICollectionViewDataSourc
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        
+        if fetchedResultsController.sections?[section].numberOfObjects ?? 0 == 0 {
+            self.imageColView.setEmptyMessage("No Images were found")
+        } else {
+            self.imageColView.restore()
+        }
+        
         return fetchedResultsController.sections?[section].numberOfObjects ?? 0
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCollectionCell", for: indexPath) as! ImageCollectionCell
+//        self.downloadImage(image: fetchedResultsController.object(at: indexPath))
         cell.setupCell(image: fetchedResultsController.object(at: indexPath).image)
         return cell
     }
@@ -180,6 +226,8 @@ extension ImageCollectionVC: NSFetchedResultsControllerDelegate {
         case .delete:
             self.imageColView.deleteItems(at: [indexPath!])
             break
+        case .update:
+            self.imageColView.reloadItems(at: [indexPath!])
         default:
             break
         }
