@@ -128,7 +128,6 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
                 }
             }
             
-            
         }
     }
     
@@ -188,13 +187,11 @@ extension MapVC: MKMapViewDelegate {
         Global.pinView(mapView: mapView, annotation: annotation)
     }
     
-    
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         self.mapView.deselectAnnotation(view.annotation!, animated: true)
         let pin = self.fetchSelectedPin(annotation: view.annotation!)
         self.pushImageCollectionVC(pin: pin, dataController: self.dataController)
     }
-    
     
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
         self.saveMapLocation()

@@ -35,7 +35,6 @@ class ImageCollectionVC: UIViewController {
         
         setFlowLayout()
         
-        
         self.addPin(pin: pin)
         
         self.fetchImages(pin: self.pin)
