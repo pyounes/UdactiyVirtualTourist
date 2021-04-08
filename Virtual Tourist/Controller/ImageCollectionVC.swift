@@ -147,13 +147,30 @@ extension ImageCollectionVC: UICollectionViewDelegate, UICollectionViewDataSourc
         return cell
     }
     
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let image = fetchedResultsController.object(at: indexPath)
+        fetchedResultsController.managedObjectContext.delete(image)
+    }
     
 }
 
 // MARK: - NSFetchedResultsControllerDelegate
 extension ImageCollectionVC: NSFetchedResultsControllerDelegate {
-    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        
+
+
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+        switch type {
+        case .insert:
+            self.imageColView.insertItems(at: [newIndexPath!])
+            break
+        case .delete:
+            self.imageColView.deleteItems(at: [indexPath!])
+            break
+        case .update:
+            break
+        default:
+            break
+        }
     }
 }
 
