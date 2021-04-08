@@ -84,18 +84,22 @@ class ImageCollectionVC: UIViewController {
     // Download all images
     private func downloadImages() {
         if let images = fetchedResultsController.fetchedObjects {
-            images.forEach { (image) in
-                if image.image == nil {
-                    self.btnNewCollection.isEnabled = false
-                    FlikrServices.shared.downloadImage(url: image.url!) { (data, error) in
-                        guard let data = data, error == nil else {return}
-                        self.editImage(image: image, imageData: data)
-                        
-                        if image == images.last {
-                            self.btnNewCollection.isEnabled = true
+            if !images.isEmpty {
+                images.forEach { (image) in
+                    if image.image == nil {
+                        self.btnNewCollection.isEnabled = false
+                        FlikrServices.shared.downloadImage(url: image.url!) { (data, error) in
+                            guard let data = data, error == nil else {return}
+                            self.editImage(image: image, imageData: data)
+                            
+                            if image == images.last {
+                                self.btnNewCollection.isEnabled = true
+                            }
                         }
                     }
                 }
+            } else {
+                self.btnNewCollection.isEnabled = true
             }
         }
     }
@@ -107,11 +111,8 @@ class ImageCollectionVC: UIViewController {
                 self.showAlert(message: error!.localizedDescription, title: "Error")
                 return
             }
-                        
             self.editImageUrl(photos: images)
             self.downloadImages()
-            self.btnNewCollection.isEnabled = true
-
         }
     }
     
