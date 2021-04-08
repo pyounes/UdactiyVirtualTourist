@@ -157,7 +157,6 @@ extension ImageCollectionVC: UICollectionViewDelegate, UICollectionViewDataSourc
 // MARK: - NSFetchedResultsControllerDelegate
 extension ImageCollectionVC: NSFetchedResultsControllerDelegate {
 
-
     func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
         switch type {
         case .insert:
