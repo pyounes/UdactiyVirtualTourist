@@ -21,8 +21,8 @@ class ImageCollectionVC: UIViewController {
     // Variables
     var pin: Pin!
     var photos: [Photo] = []
+    var images: [Image] = []
     var dataController: DataController!
-    var fetchedResultsController: NSFetchedResultsController<Image>!
     
     // MARK: - Life Cycle
     override func viewDidLoad() {
@@ -47,54 +47,41 @@ class ImageCollectionVC: UIViewController {
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        fetchedResultsController = nil
     }
     
     
     // MARK: - Custom Methods
-    private func fetchImages(pin: Pin, page: Int) {
+    fileprivate func fetchImages(pin: Pin, page: Int) {
         let fetchRequest: NSFetchRequest<Image> = Image.fetchRequest()
         let predicate = NSPredicate(format: "pin == %@", pin)
         fetchRequest.predicate = predicate
-        let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
-        fetchRequest.sortDescriptors = [sortDescriptor]
-        
-        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: nil)
-        fetchedResultsController.delegate = self
-        
-        do {
-            try fetchedResultsController.performFetch()
-        } catch {
-            fatalError("The fetch could not be performed: \(error.localizedDescription)")
-        }
-        
-        if fetchedResultsController.sections?[0].numberOfObjects == 0 {
-            self.getImages(pin: self.pin, page: page)
-        } else {
-            self.btnNewCollection.isEnabled = true
+        if let result = try? dataController.viewContext.fetch(fetchRequest) {
+            images = result
+            self.imageColView.reloadData()
         }
     }
+//    private func fetchImages(pin: Pin, page: Int) {
+//
+//        let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
+//        fetchRequest.sortDescriptors = [sortDescriptor]
+//
+//        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: nil)
+//        fetchedResultsController.delegate = self
+//
+//        do {
+//            try fetchedResultsController.performFetch()
+//        } catch {
+//            fatalError("The fetch could not be performed: \(error.localizedDescription)")
+//        }
+//
+//        if fetchedResultsController.sections?[0].numberOfObjects == 0 {
+//            self.getImages(pin: self.pin, page: page)
+//        } else {
+//            self.btnNewCollection.isEnabled = true
+//        }
+//    }
     
-    private func deleteImages(pin: Pin) {
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Image")
-        let predicate = NSPredicate(format: "pin == %@", pin)
-        fetchRequest.predicate = predicate
-        let batchDeleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-        batchDeleteRequest.resultType = .resultTypeCount
 
-        do {
-            try dataController.viewContext.execute(batchDeleteRequest)
-            dataController.viewContext.reset()
-            try self.fetchedResultsController.performFetch()
-//            self.imageColView.reloadData()
-        } catch {
-            fatalError("The fetch could not be performed: \(error.localizedDescription)")
-        }
-        self.fetchImages(pin: pin, page: 20)
-        
-        
-        
-    }
     
     // get images
     private func getImages(pin: Pin, page: Int) {
@@ -138,11 +125,40 @@ class ImageCollectionVC: UIViewController {
         let region = MKCoordinateRegion(center: coordinate, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01))
         mapView.setRegion(region, animated: true)
     }
+    
+//    private func deleteImages(pin: Pin) {
+//        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Image")
+//        let predicate = NSPredicate(format: "pin == %@", pin)
+//        fetchRequest.predicate = predicate
+//        let batchDeleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+//        batchDeleteRequest.resultType = .resultTypeCount
+//
+//        do {
+//            try dataController.viewContext.execute(batchDeleteRequest)
+//            dataController.viewContext.reset()
+//            try self.fetchedResultsController.performFetch()
+////            self.imageColView.reloadData()
+//        } catch {
+//            fatalError("The fetch could not be performed: \(error.localizedDescription)")
+//        }
+//        self.fetchImages(pin: pin, page: 20)
+//
+//
+//
+//    }
+    
+    private func deleteImage(indexPath: IndexPath) {
+        let image = images[indexPath.row]
+        self.imageColView.deleteItems(at: [indexPath])
+        dataController.viewContext.delete(image)
+        try? dataController.viewContext.save()
+        self.fetchImages(pin: self.pin, page: 1)
+    }
 
     // MARK: - IBActions
     @IBAction func btnNewCollectionClicked(_ sender: UIButton) {
-        deleteImages(pin: self.pin)
-        self.imageColView.reloadData()
+//        deleteImages(pin: self.pin)
+//        self.imageColView.reloadData()
         
     }
     
@@ -153,44 +169,43 @@ class ImageCollectionVC: UIViewController {
 extension ImageCollectionVC: UICollectionViewDelegate, UICollectionViewDataSource {
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return fetchedResultsController.sections?.count ?? 1
+        return 1
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return fetchedResultsController.sections?[section].numberOfObjects ?? 0
+        return images.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCollectionCell", for: indexPath) as! ImageCollectionCell
-        cell.setupCell(image: fetchedResultsController.object(at: indexPath).image)
+        cell.setupCell(image: images[indexPath.row].image)
         return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let image = fetchedResultsController.object(at: indexPath)
-        fetchedResultsController.managedObjectContext.delete(image)
+        self.deleteImage(indexPath: indexPath)
     }
     
 }
 
 // MARK: - NSFetchedResultsControllerDelegate
-extension ImageCollectionVC: NSFetchedResultsControllerDelegate {
-    
-    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
-        switch type {
-        case .insert:
-            self.imageColView.insertItems(at: [newIndexPath!])
-            break
-        case .delete:
-            self.imageColView.deleteItems(at: [indexPath!])
-            break
-        case .update:
-            break
-        default:
-            break
-        }
-    }
-}
+//extension ImageCollectionVC: NSFetchedResultsControllerDelegate {
+//
+//    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+//        switch type {
+//        case .insert:
+//            self.imageColView.insertItems(at: [newIndexPath!])
+//            break
+//        case .delete:
+//            self.imageColView.deleteItems(at: [indexPath!])
+//            break
+//        case .update:
+//            break
+//        default:
+//            break
+//        }
+//    }
+//}
 
 
 // MARK: MKMapViewDelegate
