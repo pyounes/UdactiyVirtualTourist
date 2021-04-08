@@ -182,46 +182,6 @@ class ImageCollectionVC: UIViewController {
         mapView.setRegion(region, animated: true)
     }
     
-    // add Image to CoreData
-    private func addImage(pin: Pin, url: URL) {
-        let image = Image(context: self.dataController.viewContext)
-        image.uuid = UUID()
-        image.creationDate = Date()
-        image.pin = pin
-        image.url = url
-    }
-    
-    
-    // Delete all Images
-//    fileprivate func deleteAllImages() {
-//        if let images = fetchedResultsController.fetchedObjects {
-//            images.forEach { (image) in
-//                dataController.viewContext.delete(image)
-//            }
-//
-//            do {
-//                try dataController.viewContext.save()
-//            } catch {
-//                print("Error When deleting Images")
-//            }
-//        }
-//    }
-//
-//    // Delete all Images
-//    fileprivate func batchDeleteAllImages() {
-//        let fetchRequest: NSFetchRequest<Image> = Image.fetchRequest()
-//        let predicate = NSPredicate(format: "pin == %@", pin)
-//        fetchRequest.predicate = predicate
-//        let batchDeleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest as! NSFetchRequest<NSFetchRequestResult>)
-//
-//        do {
-//            try dataController.viewContext.execute(batchDeleteRequest)
-//        } catch {
-//
-//        }
-//    }
-    
-    
     
     // MARK: IBAction
     @IBAction func BtnNewCollectionClicked(_ sender: UIButton) {
