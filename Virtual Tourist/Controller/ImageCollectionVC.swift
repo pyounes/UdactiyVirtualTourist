@@ -35,9 +35,11 @@ class ImageCollectionVC: UIViewController {
         
         setFlowLayout()
         
-        self.fetchImages(pin: self.pin)
+        
         self.addPin(pin: pin)
         
+        self.fetchImages(pin: self.pin)
+        self.downloadImages()
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -58,7 +60,27 @@ class ImageCollectionVC: UIViewController {
         flowLayout.itemSize = CGSize(width: dimension, height: dimension)
     }
     
+    // Get Images for this pin
+    private func getImages(pin: Pin) {
+        FlikrServices.shared.getImagesByLocation(lat: pin.lat, lon: pin.lon) { (result, error) in
+            guard let images = result?.photos.photo else {
+                self.showAlert(message: error!.localizedDescription, title: "Error")
+                return
+            }
+            
+            images.forEach { (image) in
+                self.addImage(pin: pin, url: image.url_s)
+            }
+            
+            do {
+                try self.dataController.viewContext.save()
+            } catch {
+                self.showAlert(message: "Error", title: "There was an error fetching the Images URLs")
+            }
+        }
+    }
     
+    // fetch images for a specific pin
     private func fetchImages(pin: Pin) {
         let fetchRequest: NSFetchRequest<Image> = Image.fetchRequest()
         let predicate = NSPredicate(format: "pin == %@", pin)
@@ -79,11 +101,28 @@ class ImageCollectionVC: UIViewController {
 
     
     // Download Images
-    private func downloadImages(image: Image) {
+    private func downloadImage(image: Image) {
         if image.image == nil {
+            self.btnNewCollection.isEnabled = false
             FlikrServices.shared.downloadImage(url: image.url!) { (data, error) in
                 guard let data = data, error == nil else {return}
                 self.editImage(image: image, imageData: data)
+                
+                
+            }
+        }
+    }
+    
+    private func downloadImages() {
+        if let images = fetchedResultsController.fetchedObjects {
+            images.forEach { (image) in
+                if image.image == nil {
+                    self.btnNewCollection.isEnabled = false
+                    FlikrServices.shared.downloadImage(url: image.url!) { (data, error) in
+                        guard let data = data, error == nil else {return}
+                        self.editImage(image: image, imageData: data)
+                    }
+                }
             }
         }
     }
@@ -133,6 +172,15 @@ class ImageCollectionVC: UIViewController {
         }
     }
     
+    // add Image to CoreData
+    private func addImage(pin: Pin, url: URL) {
+        let image = Image(context: self.dataController.viewContext)
+        image.uuid = UUID()
+        image.creationDate = Date()
+        image.pin = pin
+        image.url = url
+    }
+    
     // MARK: IBAction
     @IBAction func BtnNewCollectionClicked(_ sender: UIButton) {
         self.btnNewCollection.isEnabled = false
@@ -157,7 +205,7 @@ extension ImageCollectionVC: UICollectionViewDelegate, UICollectionViewDataSourc
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCollectionCell", for: indexPath) as! ImageCollectionCell
-        self.downloadImages(image: fetchedResultsController.object(at: indexPath))
+//        self.downloadImage(image: fetchedResultsController.object(at: indexPath))
         cell.setupCell(image: fetchedResultsController.object(at: indexPath).image)
         return cell
     }
@@ -177,9 +225,9 @@ extension ImageCollectionVC: NSFetchedResultsControllerDelegate {
         case .insert:
             self.imageColView.insertItems(at: [newIndexPath!])
             break
-//        case .delete:
-//            self.imageColView.deleteItems(at: [indexPath!])
-//            break
+        case .delete:
+            self.imageColView.deleteItems(at: [indexPath!])
+            break
         case .update:
             self.imageColView.reloadItems(at: [indexPath!])
         default:
