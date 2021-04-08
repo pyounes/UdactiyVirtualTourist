@@ -17,7 +17,7 @@ enum EndPoints {
     var string: String {
         switch self {
         case .getImagesByLocation(let lat, let lon):
-            return "/services/rest/?method=flickr.photos.search&api_key=\(EndPoints.apiKey)&lat=\(lat)&lon=\(lon)&radius=20&extras=url_s&per_page=20&format=json&nojsoncallback=1"
+            return "/services/rest/?method=flickr.photos.search&api_key=\(EndPoints.apiKey)&lat=\(lat)&lon=\(lon)&radius=20&extras=url_s&per_page=20&page=\(Int.random(in: 1..<100))&format=json&nojsoncallback=1"
         }
     }
     

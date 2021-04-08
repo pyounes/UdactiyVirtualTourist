@@ -70,13 +70,14 @@ class ImageCollectionVC: UIViewController {
             
             images.forEach { (image) in
                 self.addImage(pin: pin, url: image.url_s)
+                do {
+                    try self.dataController.viewContext.save()
+                } catch {
+                    self.showAlert(message: "Error", title: "There was an error fetching the Images URLs")
+                }
             }
             
-            do {
-                try self.dataController.viewContext.save()
-            } catch {
-                self.showAlert(message: "Error", title: "There was an error fetching the Images URLs")
-            }
+            
         }
     }
     
@@ -88,7 +89,7 @@ class ImageCollectionVC: UIViewController {
         let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
         fetchRequest.sortDescriptors = [sortDescriptor]
         
-        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: "\(pin)-Images")
+        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: nil)
         fetchedResultsController.delegate = self
         
         do {
@@ -121,6 +122,10 @@ class ImageCollectionVC: UIViewController {
                     FlikrServices.shared.downloadImage(url: image.url!) { (data, error) in
                         guard let data = data, error == nil else {return}
                         self.editImage(image: image, imageData: data)
+                        
+                        if image == images.last {
+                            self.btnNewCollection.isEnabled = true
+                        }
                     }
                 }
             }
@@ -172,6 +177,20 @@ class ImageCollectionVC: UIViewController {
         }
     }
     
+    // Delete all Images
+    fileprivate func batchDeleteAllImages() {
+        let fetchRequest: NSFetchRequest<Image> = Image.fetchRequest()
+        let predicate = NSPredicate(format: "pin == %@", pin)
+        fetchRequest.predicate = predicate
+        let batchDeleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest as! NSFetchRequest<NSFetchRequestResult>)
+        
+        do {
+            try dataController.viewContext.execute(batchDeleteRequest)
+        } catch {
+            
+        }
+    }
+    
     // add Image to CoreData
     private func addImage(pin: Pin, url: URL) {
         let image = Image(context: self.dataController.viewContext)
@@ -184,8 +203,13 @@ class ImageCollectionVC: UIViewController {
     // MARK: IBAction
     @IBAction func BtnNewCollectionClicked(_ sender: UIButton) {
         self.btnNewCollection.isEnabled = false
-        self.deleteAllImages()
+        self.batchDeleteAllImages()
         self.fetchImages(pin: self.pin)
+        self.imageColView.reloadData()
+        self.getImages(pin: self.pin)
+        self.fetchImages(pin: self.pin)
+        self.downloadImages()
+        
     }
     
 
