@@ -22,7 +22,6 @@ class ImageCollectionCell: UICollectionViewCell {
         } else {
             self.imageView.image = #imageLiteral(resourceName: "placeHolderImg")
         }
-        
     }
     
 }

@@ -60,26 +60,7 @@ class ImageCollectionVC: UIViewController {
         flowLayout.itemSize = CGSize(width: dimension, height: dimension)
     }
     
-    // Get Images for this pin
-    private func getImages(pin: Pin) {
-        FlikrServices.shared.getImagesByLocation(lat: pin.lat, lon: pin.lon) { (result, error) in
-            guard let images = result?.photos.photo else {
-                self.showAlert(message: error!.localizedDescription, title: "Error")
-                return
-            }
-            
-            images.forEach { (image) in
-                self.addImage(pin: pin, url: image.url_s)
-                do {
-                    try self.dataController.viewContext.save()
-                } catch {
-                    self.showAlert(message: "Error", title: "There was an error fetching the Images URLs")
-                }
-            }
-            
-            
-        }
-    }
+
     
     // fetch images for a specific pin
     private func fetchImages(pin: Pin) {
@@ -108,8 +89,6 @@ class ImageCollectionVC: UIViewController {
             FlikrServices.shared.downloadImage(url: image.url!) { (data, error) in
                 guard let data = data, error == nil else {return}
                 self.editImage(image: image, imageData: data)
-                
-                
             }
         }
     }
@@ -132,6 +111,47 @@ class ImageCollectionVC: UIViewController {
         }
     }
     
+    // Get Images for this pin
+    private func getImages(pin: Pin) {
+        FlikrServices.shared.getImagesByLocation(lat: pin.lat, lon: pin.lon) { (result, error) in
+            guard let images = result?.photos.photo else {
+                self.showAlert(message: error!.localizedDescription, title: "Error")
+                return
+            }
+                        
+            self.editImageUrl(photos: images)
+            self.downloadImages()
+
+        }
+    }
+    
+    // Edit Image to add the image raw data downloaded
+    func editImageUrl(photos: [Photo]) {
+        let context = self.dataController.viewContext
+        let fetchRequest: NSFetchRequest<Image> = Image.fetchRequest()
+        
+        if let images = fetchedResultsController.fetchedObjects {
+            
+            for (photo, image) in zip(photos, images) {
+                fetchRequest.predicate = NSPredicate(format: "uuid == %@ AND url != nil", image.uuid! as CVarArg)
+                
+                do {
+                    let result = try context.fetch(fetchRequest)
+                    if (result.count > 0) {
+                        let managedObject = result[0] as NSManagedObject
+                        managedObject.setValue(photo.url_s, forKey: "url")
+                        managedObject.setValue(nil, forKey: "image")
+                        try context.save()
+                        print("Changes saved...")
+                    }
+                } catch {
+                    print("Failed")
+                }
+                
+            }
+        }
+    }
+    
     // Edit Image to add the image raw data downloaded
     func editImage(image: Image, imageData: Data) {
         let uuid = image.uuid!
@@ -139,18 +159,18 @@ class ImageCollectionVC: UIViewController {
         let fetchRequest: NSFetchRequest<Image> = Image.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "uuid == %@ AND image == nil", uuid as CVarArg)
         
-            do {
-                let result = try context.fetch(fetchRequest)
-                if (result.count > 0) {
-                    let managedObject = result[0] as NSManagedObject
-                    managedObject.setValue(imageData, forKey: "image")
-                    try context.save()
-                    print("Changes saved...")
-                }
-            } catch {
-                print("Failed")
+        do {
+            let result = try context.fetch(fetchRequest)
+            if (result.count > 0) {
+                let managedObject = result[0] as NSManagedObject
+                managedObject.setValue(imageData, forKey: "image")
+                try context.save()
+                print("Changes saved...")
             }
+        } catch {
+            print("Failed")
         }
+    }
     
     // Add loaded Pins on the Map
     private func addPin(pin: Pin) {
@@ -162,35 +182,6 @@ class ImageCollectionVC: UIViewController {
         mapView.setRegion(region, animated: true)
     }
     
-    // Delete all Images
-    fileprivate func deleteAllImages() {
-        if let images = fetchedResultsController.fetchedObjects {
-            images.forEach { (image) in
-                dataController.viewContext.delete(image)
-            }
-            
-            do {
-                try dataController.viewContext.save()
-            } catch {
-                print("Error When deleting Images")
-            }
-        }
-    }
-    
-    // Delete all Images
-    fileprivate func batchDeleteAllImages() {
-        let fetchRequest: NSFetchRequest<Image> = Image.fetchRequest()
-        let predicate = NSPredicate(format: "pin == %@", pin)
-        fetchRequest.predicate = predicate
-        let batchDeleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest as! NSFetchRequest<NSFetchRequestResult>)
-        
-        do {
-            try dataController.viewContext.execute(batchDeleteRequest)
-        } catch {
-            
-        }
-    }
-    
     // add Image to CoreData
     private func addImage(pin: Pin, url: URL) {
         let image = Image(context: self.dataController.viewContext)
@@ -200,15 +191,48 @@ class ImageCollectionVC: UIViewController {
         image.url = url
     }
     
+    
+    // Delete all Images
+//    fileprivate func deleteAllImages() {
+//        if let images = fetchedResultsController.fetchedObjects {
+//            images.forEach { (image) in
+//                dataController.viewContext.delete(image)
+//            }
+//
+//            do {
+//                try dataController.viewContext.save()
+//            } catch {
+//                print("Error When deleting Images")
+//            }
+//        }
+//    }
+//
+//    // Delete all Images
+//    fileprivate func batchDeleteAllImages() {
+//        let fetchRequest: NSFetchRequest<Image> = Image.fetchRequest()
+//        let predicate = NSPredicate(format: "pin == %@", pin)
+//        fetchRequest.predicate = predicate
+//        let batchDeleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest as! NSFetchRequest<NSFetchRequestResult>)
+//
+//        do {
+//            try dataController.viewContext.execute(batchDeleteRequest)
+//        } catch {
+//
+//        }
+//    }
+    
+    
+    
     // MARK: IBAction
     @IBAction func BtnNewCollectionClicked(_ sender: UIButton) {
         self.btnNewCollection.isEnabled = false
-        self.batchDeleteAllImages()
-        self.fetchImages(pin: self.pin)
-        self.imageColView.reloadData()
+//        self.batchDeleteAllImages()
+//        self.fetchImages(pin: self.pin)
+//        self.imageColView.reloadData()
+//        self.getImages(pin: self.pin)
+//        self.fetchImages(pin: self.pin)
+//        self.downloadImages()
         self.getImages(pin: self.pin)
-        self.fetchImages(pin: self.pin)
-        self.downloadImages()
         
     }
     

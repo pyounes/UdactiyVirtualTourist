@@ -120,13 +120,15 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
             
             images.forEach { (image) in
                 self.addImage(pin: pin, url: image.url_s)
+                
+                do {
+                    try self.dataController.viewContext.save()
+                } catch {
+                    self.showAlert(message: "Error", title: "There was an error fetching the Images URLs")
+                }
             }
             
-            do {
-                try self.dataController.viewContext.save()
-            } catch {
-                self.showAlert(message: "Error", title: "There was an error fetching the Images URLs")
-            }
+            
         }
     }
     
