@@ -68,6 +68,7 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
                 try dataController.viewContext.save()
                 pins.append(pin)
                 self.addPin(pin: pin)
+                self.getImages(pin: pin)
             } catch {
                 showAlert(message: "Error", title: "Your Data hasn't Been Save")
             }
@@ -107,6 +108,35 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
         mapView.addAnnotation(annotation)
         let region = MKCoordinateRegion(center: coordinate, span: MKCoordinateSpan(latitudeDelta: 1.0, longitudeDelta: 1.0))
         mapView.setRegion(region, animated: true)
+    }
+    
+    // Get Images for this pin
+    private func getImages(pin: Pin) {
+        FlikrServices.shared.getImagesByLocation(lat: pin.lat, lon: pin.lon) { (result, error) in
+            guard let images = result?.photos.photo else {
+                self.showAlert(message: error!.localizedDescription, title: "Error")
+                return
+            }
+            
+            images.forEach { (image) in
+                self.addImage(pin: pin, url: image.url_s)
+            }
+            
+            do {
+                try self.dataController.viewContext.save()
+            } catch {
+                self.showAlert(message: "Error", title: "There was an error fetching the Images URLs")
+            }
+        }
+    }
+    
+    // add Image to CoreData
+    private func addImage(pin: Pin, url: URL) {
+        let image = Image(context: self.dataController.viewContext)
+        image.uuid = UUID()
+        image.creationDate = Date()
+        image.pin = pin
+        image.url = url
     }
     
     // get Pin from coreData to be sent to the ImageCollectionVC
