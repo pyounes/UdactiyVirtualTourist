@@ -16,6 +16,8 @@ class ImageCollectionVC: UIViewController {
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var imageColView: UICollectionView!
     @IBOutlet weak var flowLayout: UICollectionViewFlowLayout!
+    @IBOutlet weak var btnNewCollection: UIButton!
+    
     
     // Variables
     var pin: Pin!
@@ -29,6 +31,7 @@ class ImageCollectionVC: UIViewController {
         super.viewDidLoad()
 
         self.title = "Pin Image Collection"
+        self.btnNewCollection.isEnabled = false
         
         let space: CGFloat = 3.0
         let dimension = (view.frame.size.width - (2 * space)) / 3.0
@@ -68,13 +71,10 @@ class ImageCollectionVC: UIViewController {
         
         if fetchedResultsController.sections?[0].numberOfObjects == 0 {
             self.getImages(pin: self.pin)
+        } else {
+            self.btnNewCollection.isEnabled = true
         }
-        
-        try? dataController.viewContext.save()
-        
-        DispatchQueue.main.async {
-            self.imageColView.reloadData()
-        }
+
     }
     
     // get images
@@ -94,18 +94,11 @@ class ImageCollectionVC: UIViewController {
             FlikrServices.shared.downloadImage(url: photo.url_s) { (data, error) in
                 guard let data = data, error == nil else {return}
                 self.addImage(pin: self.pin, imageData: data)
+                if photo == photos.last {
+                    self.btnNewCollection.isEnabled = true
+                }
             }
         }
-        
-        
-        
-//        DispatchQueue.global().async { [weak self] in
-//            guard let strong = self else {return }
-//            if let data = try? Data(contentsOf: strong.photos.first!.url_s) {
-//
-//
-//            }
-//        }
     }
     
     // add Image to CoreData
@@ -125,7 +118,29 @@ class ImageCollectionVC: UIViewController {
         let region = MKCoordinateRegion(center: coordinate, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01))
         mapView.setRegion(region, animated: true)
     }
-
+    
+    // Delete all Images
+    fileprivate func deleteAllImages() {
+        if let images = fetchedResultsController.fetchedObjects {
+            images.forEach { (image) in
+                dataController.viewContext.delete(image)
+            }
+            
+            do {
+                try dataController.viewContext.save()
+            } catch {
+                print("Error When deleting Images")
+            }
+        }
+    }
+    
+    // MARK: IBAction
+    @IBAction func BtnNewCollectionClicked(_ sender: UIButton) {
+        self.btnNewCollection.isEnabled = true
+        self.deleteAllImages()
+        self.fetchImages(pin: self.pin)
+    }
+    
 
 }
 
@@ -164,8 +179,6 @@ extension ImageCollectionVC: NSFetchedResultsControllerDelegate {
             break
         case .delete:
             self.imageColView.deleteItems(at: [indexPath!])
-            break
-        case .update:
             break
         default:
             break

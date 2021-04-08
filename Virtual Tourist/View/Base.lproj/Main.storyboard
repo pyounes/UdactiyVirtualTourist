@@ -102,6 +102,9 @@
                                 <rect key="frame" x="0.0" y="812" width="414" height="50"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="25"/>
                                 <state key="normal" title="New Collection"/>
+                                <connections>
+                                    <action selector="BtnNewCollectionClicked:" destination="VKT-UR-xk4" eventType="touchUpInside" id="l5o-4U-UtB"/>
+                                </connections>
                             </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="RZF-5h-sfm"/>
@@ -121,6 +124,7 @@
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="btnNewCollection" destination="6SK-rf-Jb8" id="XJJ-cj-FYf"/>
                         <outlet property="flowLayout" destination="TYR-Qq-IL2" id="bYl-hE-bXI"/>
                         <outlet property="imageColView" destination="24O-A3-Muq" id="JT9-xA-CQR"/>
                         <outlet property="mapView" destination="lzc-6Q-TyH" id="gQt-K0-Zky"/>
