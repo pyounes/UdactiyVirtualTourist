@@ -151,7 +151,7 @@ class ImageCollectionVC: UIViewController {
         
         do {
             let result = try context.fetch(fetchRequest)
-            if (result.count > 0) {
+            if result.count > 0 {
                 let managedObject = result[0] as NSManagedObject
                 managedObject.setValue(imageData, forKey: "image")
                 try context.save()
@@ -203,7 +203,6 @@ extension ImageCollectionVC: UICollectionViewDelegate, UICollectionViewDataSourc
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCollectionCell", for: indexPath) as! ImageCollectionCell
-//        self.downloadImage(image: fetchedResultsController.object(at: indexPath))
         cell.setupCell(image: fetchedResultsController.object(at: indexPath).image)
         return cell
     }

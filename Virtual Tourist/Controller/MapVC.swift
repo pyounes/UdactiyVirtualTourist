@@ -61,8 +61,8 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
             let coordinate = mapView.convert(tapLocation,toCoordinateFrom: mapView)
 
             let pin = Pin(context: dataController.viewContext)
-            pin.lat = coordinate.latitude.magnitude
-            pin.lon = coordinate.longitude.magnitude
+            pin.lat = coordinate.latitude
+            pin.lon = coordinate.longitude
             
             do {
                 try dataController.viewContext.save()
